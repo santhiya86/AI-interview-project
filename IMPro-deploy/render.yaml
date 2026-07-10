@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: interviewpro
+    runtime: node
+    buildCommand: "cd frontend && npm install && npx --yes vite build && mkdir -p ../backend/public && cp -r dist/. ../backend/public/ && cd ../backend && npm install"
+    startCommand: "cd backend && node index.js"
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 5000
+      - key: OLLAMA_URL
+        value: http://localhost:11434
+      - key: WHISPER_URL
+        value: http://localhost:6000
+      - key: NODE_ENV
+        value: production
