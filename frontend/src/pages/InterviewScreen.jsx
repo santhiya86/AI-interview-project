@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { api } from "../utils/api";const getQuestionTime = (mode) => 3 * 60;
+const getQuestionTime = (mode) =>mode === "text" ? 5 * 60 : 3 * 60;
 export default function InterviewScreen({ config, interviewId, onComplete, onExit }) {
   const { type, subject, difficulty, inputMode, questions } = config;
   const [qIdx,        setQIdx]        = useState(0);
