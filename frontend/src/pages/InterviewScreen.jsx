@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { api } from "../utils/api";
-
-const QUESTION_TIME = 3 * 60;
+const getQuestionTime = (mode) => mode === "text" ? 5 * 60 : 3 * 60;
 
 export default function InterviewScreen({ config, interviewId, onComplete, onExit }) {
   const { type, subject, difficulty, inputMode, questions } = config;
@@ -9,8 +8,13 @@ export default function InterviewScreen({ config, interviewId, onComplete, onExi
   const [textAnswer,  setTextAnswer]  = useState("");
   const [recording,   setRecording]   = useState(false);
   const [analyzing,   setAnalyzing]   = useState(false);
-  const [timeLeft,    setTimeLeft]    = useState(QUESTION_TIME);
-  const [currentMode, setCurrentMode] = useState(inputMode === "hybrid" ? "text" : inputMode);
+  const [currentMode, setCurrentMode] = useState(
+  inputMode === "hybrid" ? "text" : inputMode
+);
+
+const [timeLeft, setTimeLeft] = useState(
+  getQuestionTime(inputMode === "hybrid" ? "text" : inputMode)
+);
   const [submitting,  setSubmitting]  = useState(false);
   const [voiceNote,   setVoiceNote]   = useState("");
   const [liveText,    setLiveText]    = useState(""); // live transcript display
@@ -52,21 +56,24 @@ export default function InterviewScreen({ config, interviewId, onComplete, onExi
   }, [completing, interviewId, onComplete, config, onExit]);
 
   // ── Move to next question ───────────────────────────────────────────────
-  const goNext = useCallback(() => {
-    setTextAnswer("");
-    setVoiceNote("");
-    setLiveText("");
-    finalTranscriptRef.current = "";
-    if (qIdx < questions.length - 1) {
-      setQIdx(q => q + 1);
-    } else {
-      completeInterview();
-    }
-  }, [qIdx, questions.length, completeInterview]);
+ const goNext = useCallback(() => {
+  clearInterval(timerRef.current);
+
+  setTextAnswer("");
+  setVoiceNote("");
+  setLiveText("");
+  finalTranscriptRef.current = "";
+
+  if (qIdx < questions.length - 1) {
+    setQIdx(q => q + 1);
+  } else {
+    completeInterview();
+  }
+}, [qIdx, questions.length, completeInterview]);
 
   // ── Timer ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    setTimeLeft(QUESTION_TIME);
+useEffect(() => {
+  setTimeLeft(getQuestionTime(currentMode));
     startTimeRef.current = Date.now();
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
@@ -76,7 +83,7 @@ export default function InterviewScreen({ config, interviewId, onComplete, onExi
             const ans = textAnswer || "";
             api(`/interview/${interviewId}/answer/text`, {
               method: "POST",
-              body: JSON.stringify({ questionIndex: qIdx, answer: ans || "(time expired)", timeTakenSec: QUESTION_TIME })
+              body: JSON.stringify({ questionIndex: qIdx, answer: ans || "(time expired)", timeTakenSec: Math.round((Date.now() - startTimeRef.current) / 1000) })
             }).then(goNext).catch(goNext);
           } else {
             goNext();
@@ -88,7 +95,7 @@ export default function InterviewScreen({ config, interviewId, onComplete, onExi
     }, 1000);
     return () => clearInterval(timerRef.current);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qIdx]);
+  },  [qIdx, currentMode]);
 
   const stopTimer = () => clearInterval(timerRef.current);
 
