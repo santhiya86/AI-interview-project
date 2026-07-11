@@ -1,0 +1,12 @@
+{
+  "name": "interviewpro",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npx --yes vite build && cp -r dist ../backend/public",
+    "start": "cd backend && npm install && node index.js",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
